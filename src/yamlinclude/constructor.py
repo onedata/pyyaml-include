@@ -142,7 +142,7 @@ class YamlIncludeConstructor:
                     except KeyError:
                         print("No value for variable: {}".format(valueName),file=sys.stderr)
                         aValue=""
-                stringToBeSubstituted = re.sub('\${'+valueName+'}',aValue,stringToBeSubstituted)
+                stringToBeSubstituted = re.sub('\${'+valueName+'}',str(aValue),str(stringToBeSubstituted))
             pathname = stringToBeSubstituted
         except KeyError:
             pass #print("No config!",file=sys.stderr)
