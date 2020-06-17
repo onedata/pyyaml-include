@@ -114,6 +114,39 @@ class YamlIncludeConstructor:
 
         .. warning:: It's called by :mod:`yaml`. Do NOT call it yourself.
         """
+        
+        os_env_path_matcher = re.compile(r'\$\{([^}^{]+)\}')
+        import sys
+        try:
+            # First check if the value is defined in the SHELL environment
+            varsFromYamlConfigRaw = os.environ["config"]
+            varsFromYamlConfig = yaml.load(varsFromYamlConfigRaw,Loader=FullLoader)
+            #print(varsFromYamlConfig,file=sys.stderr)
+            stringToBeSubstituted = pathname
+            valueNames = os_env_path_matcher.findall(stringToBeSubstituted)
+            for valueName in valueNames:
+                try:
+                    # First check if the value is defined in the SHELL environment
+                    aValue = os.environ[valueName]
+                except KeyError:
+                    # If that fails check if it's defined in yaml
+                    # Split the value name in case it refers to a nested value
+                    keyList=valueName.split(".")
+                    try:
+                        # Start with the root of the dictionary containing all variables
+                        aValue = varsFromYamlConfig
+                        # In case of nested dictionary iterate every dictionary level
+                        for akey in keyList:
+                            #print(akey+"sa",file=sys.stderr)
+                            aValue = aValue[akey]
+                    except KeyError:
+                        print("No value for variable: {}".format(valueName),file=sys.stderr)
+                        aValue=""
+                stringToBeSubstituted = re.sub('\${'+valueName+'}',aValue,stringToBeSubstituted)
+            pathname = stringToBeSubstituted
+        except KeyError:
+            pass #print("No config!",file=sys.stderr)
+        
         if not encoding:
             encoding = self._encoding or self.DEFAULT_ENCODING
         if self._base_dir:
